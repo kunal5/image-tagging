@@ -1,0 +1,98 @@
+package-lock.json
+webpack-stats.json
+*.py[co]
+*.pyc
+*.py~
+# Packages
+*.egg
+*.egg-info
+*.log
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.coveragerc
+.tox
+.idea
+.coverage.*
+dump.rdb
+
+#Translations
+*.mo
+
+#Mr Developer
+.mr.developer.cfg
+*.log
+logs/*
+.project
+.pydevproject
+local_settings.py
+webkit-server/*
+#resumes folder
+#sumo_plus_resumes/*
+/media/js/resume/main_rsnt.js
+/media/uploads/employees/
+#csv sheets exported
+/media/uploads/exported/*
+*.sublime*
+/media/uploads/employees/
+.DS_Store
+media/corpora/tokenizers/
+media/corpora/
+/media/CACHE/
+reactFrontEnd/bundles
+CACHE/
+node_modules/
+.sass-cache/
+.eslintrc.js
+static/CACHE/css/*
+media/corpora/corpora/
+media/corpora/bad_words.csv
+media/corpora/spam_words.csv
+logs/
+static/CACHE
+.sass-cache/
+.tags*
+.vscode/*
+google-application-credentials.json
+node_modules/
+# Installer logs
+pip-log.txt
+reactFrontEnd/bundles/
+# Unit test / coverage reports
+.coverage
+.tox
+.idea
+bower_components/
+node_modules/
+#Translations
+*.mo
+webpack-stats.json
+#Mr Developer
+.mr.developer.cfg
+*.log
+logs/*
+.project
+.pydevproject
+local_settings.py
+personal.py
+.DS_Store
+package-lock.json
+#datafiles/*.mdl
+webkit-server/*
+htmlcov/*
+
+#bundle
+
+asset_bundling/*

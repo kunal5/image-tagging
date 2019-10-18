@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Game</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <nav class="navbar navbar-expand-lg navbar-light" style="background-color: seashell; margin-left: 82%">
+      <div class="collapse navbar-collapse" id="navbarText">
+        <ul class="navbar-nav mr-auto">
+            <li class="navbar-text">
+                Hi, {{ user.username }}
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/home/logout/" style="color: rebeccapurple">Logout</a>
+            </li>
+        </ul>
+      </div>
+    </nav>
+</head>
+<body style="background-color: seashell">
+    <div style="text-align: center; margin-top: 15%">
+        <div class="cls_game" style="display: none">
+            <h3>Welcome to the Game!</h3>
+        </div>
+        {% if show_game_button %}
+            <button class="btn btn-primary btn-lg cls_pair" style="color: aqua"> Please click on this button to pair with other person</button>
+            <div id="loading" style="display: none">
+                <p>Please wait ...</p>
+            </div>
+            <div class="cls_game" style="display: none">
+                <span class="cls_player1"></span> and
+                <span class="cls_player2"></span>
+                <div style="padding-top: 2%">
+                    <a class="btn btn-primary cls_images" href="/game/round-1/">Start Playing</a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</body>
+<script>
+    {# Making an Ajax request for matching a free online user #}
+    $('.cls_pair').on("click",  getPair);
+    function getPair() {
+        $.ajax({
+            url: '/game/',
+            data: {
+                'pair': '1',
+                'csrfmiddlewaretoken': document.cookie.split('csrftoken=')[1]
+            },
+            method: 'post',
+            beforeSend: function () {
+                $('.cls_pair').hide();
+                $("#loading").show();
+            },
+            success: function (data) {
+                console.log(data);
+                $('#loading').html("<p>You are now paired &#128512;</p>");
+                $('.cls_game').show();
+                $('.cls_player1').text(data.player1);
+                $('.cls_player2').text(data.player2);
+            }
+        });
+    }
+
+    {# Making an Ajax request fo    #}
+</script>
+</html>
