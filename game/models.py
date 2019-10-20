@@ -16,3 +16,9 @@ class PrimaryImages(models.Model):
 
 class SecondaryImages(models.Model):
     secondary_image = models.URLField(null=False, blank=False)
+
+
+class SharedPair(models.Model):
+    sharedplayer1 = models.ForeignKey(Participants, related_name='sharedplayer1')
+    sharedplayer2 = models.ForeignKey(Participants, related_name='sharedplayer2')
+    is_pair = models.BooleanField(default=False)

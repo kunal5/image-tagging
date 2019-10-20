@@ -11,3 +11,4 @@ class Participants(User):
     ))
     contact_number = models.CharField(max_length=50)
     is_loggedin = models.BooleanField(default=False)
+    searching_pair = models.BooleanField(default=False)

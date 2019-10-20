@@ -35,7 +35,7 @@
                 <span class="cls_player1"></span> and
                 <span class="cls_player2"></span>
                 <div style="padding-top: 2%">
-                    <a class="btn btn-primary cls_images" href="/game/round-1/">Start Playing</a>
+                    <button class="btn btn-primary cls_images">Start Playing</button>
                 </div>
             </div>
         {% endif %}
@@ -66,6 +66,9 @@
         });
     }
 
-    {# Making an Ajax request fo    #}
+    $('.cls_game').on("click", startGame);
+    function startGame() {
+        window.location = '/game/round-1/?player1='+$('.cls_player1')[0].innerText+'&player2='+$('.cls_player2')[0].innerText;
+    }
 </script>
 </html>

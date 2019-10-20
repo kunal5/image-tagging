@@ -2,8 +2,9 @@ from django.shortcuts import render
 from django.views.generic import FormView, TemplateView
 from django.contrib.auth import authenticate, logout, login
 from django.http import HttpResponseRedirect
+from django.db.models import Q
 from account.models import Participants
-from game.models import PrimaryImages, SecondaryImages
+from game.models import PrimaryImages, SecondaryImages, Game, SharedPair
 from home.forms import HomeForm
 # Create your views here.
 
@@ -54,10 +55,11 @@ class HomeView(FormView):
             })
         else:
             login(self.request, user)
-            self.request.session['primary_images'] = list(PrimaryImages.objects.all().values_list(
-                'primary_image', flat=True))
-            self.request.session['secondary_images'] = list(SecondaryImages.objects.all().values_list(
-                'secondary_image', flat=True))
+            primary_images = list(PrimaryImages.objects.all().values_list('primary_image', flat=True))
+            self.request.session['primary_images'] = ','.join(list(PrimaryImages.objects.all().values_list(
+                'primary_image', flat=True)))
+            self.request.session['secondary_images'] = ','.join(list(SecondaryImages.objects.all().values_list(
+                'secondary_image', flat=True)))
             Participants.objects.filter(username=username).update(is_loggedin=True)
             return HttpResponseRedirect('/game/')
 
@@ -73,6 +75,10 @@ class HomeLogOutView(TemplateView):
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated():
-            Participants.objects.filter(username=request.user.username).update(is_loggedin=False)
+            Participants.objects.filter(username=request.user.username).update(is_loggedin=False,
+                                                                               searching_pair=False)
+            Game.objects.filter(Q(player1=request.user) | Q(player2=request.user)).update(is_playing=False)
+            SharedPair.objects.filter(Q(sharedplayer1=request.user) | Q(sharedplayer2=request.user)).update(
+                is_pair=False)
             logout(request)
             return HttpResponseRedirect('/home/login/?logout=1')

@@ -12,7 +12,7 @@
       <div class="collapse navbar-collapse" id="navbarText">
         <ul class="navbar-nav mr-auto">
             <li class="navbar-text">
-                Hi, {{ user.username }}
+                Hi, {{ user }}
             </li>
             <li class="nav-item">
                 <a class="nav-link" href="http://127.0.0.1:8000/home/logout/" style="color: rebeccapurple">Logout</a>
@@ -22,8 +22,118 @@
     </nav>
 </head>
 <body style="background-color: seashell">
-    <p>Choose the most apt answer according to you.</p>
-    <img alt="" src="{{ primary_image }}" style="padding-left: 38%; width: 50%">
+    <h4>Choose the most apt answer according to the given primary image.</h4>
+    <img alt="" src="" style="padding-left: 38%; width: 60%" id="id_primary_image">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+    </form>
+    <div style="display: none">
+        <span class="cls_gameid" style="display: none">{{ gameid }}</span>
+        <span class="cls_primary" style="display: none">{{ primary_images }}</span>
+        <span class="cls_secondary" style="display: none">{{ secondary_images }}</span>
+        <span class="cls_player1" style="display: none">{{ player1 }}</span>
+        <span class="cls_player2" style="display: none">{{ player2 }}</span>
+        <span class="cls_loggedinuser" style="display: none">{{ user }}</span>
+    </div>
+    <button class="btn btn-primary cls_save_game" type="submit" style="margin-left: 50%; margin-top: -8%">Submit</button>
 </body>
+<script>
+    $(document).ready(function(){
+    // your code
+        let primaryImages = $('.cls_primary')[0].innerText.split(',');
+        let secondaryImages = $('.cls_secondary')[0].innerText.split(',');
+        let gameid = $('.cls_gameid')[0].innerText;
+        let user = $('.cls_loggedinuser')[0].innerText;
+        let res = {};
+        let data = JSON.parse(window.localStorage.getItem("Game"));
+        if(!data){
+            // Setting Primary Image
+            let pIndex = Math.floor(Math.random() * 15);
+            $('#id_primary_image')[0].src = primaryImages[pIndex];
+
+            // Setting Secondary Images
+            let indexes = () =>{
+                let index1 = null;
+                let index2 = null;
+                let index3 = null;
+                let indexes = [];
+                while(index1===index2||index1===index3||index2===index3){
+                    index1 =  Math.floor(Math.random() * 3);
+                    index2 =  Math.floor(Math.random() * 3);
+                    index3 =  Math.floor(Math.random() * 3);
+                }
+                indexes.push(index1);
+                indexes.push(index2);
+                indexes.push(index3);
+                return indexes;
+            };
+            let sIndexes = indexes();
+            $('.cls_secondaryimage_4')[0].src = $('.cls_secondary')[0].innerText.split(',')[sIndexes[0]];
+            $('.cls_secondaryimage_5')[0].src = $('.cls_secondary')[0].innerText.split(',')[sIndexes[1]];
+            $('.cls_secondaryimage_6')[0].src = $('.cls_secondary')[0].innerText.split(',')[sIndexes[2]];
+            let secondaryImages = [];
+            secondaryImages.push(sIndexes[0]);
+            secondaryImages.push(sIndexes[1]);
+            secondaryImages.push(sIndexes[2]);
+            let player = {};
+            let dummy = {};
+            let dummy2 = {};
+            dummy['primaryImages'] = primaryImages[pIndex];
+            dummy['secondaryImages'] = secondaryImages;
+            player['round1'] = dummy;
+            dummy2[user] = player;
+            res[gameid] = dummy2;
+            console.log(res);
+            window.localStorage.setItem('Game', JSON.stringify(res));
+        }
+        else{
+            debugger;
+        }
+    });
+
+    $('.cls_save_game').on("click", ()=>{
+        if(!$('#id_Options_0')[0].checked && !$('#id_Options_1')[0].checked && !$('#id_Options_2')[0].checked){
+            alert('Please select atleast one option');
+        }
+        else{
+            let gameid = $('.cls_gameid')[0].innerText;
+            let primaryImage = $('#id_primary_image').src;
+            let secondaryImages = window.localStorage('secondaryImages').split(',');
+            let checked_secondaryimages = [];
+            if($('#id_Options_0')[0].checked){
+                checked_secondaryimages.push(secondaryImages[0]);
+            }
+
+            if($('#id_Options_1')[0].checked){
+                checked_secondaryimages.push(secondaryImages[1]);
+            }
+
+            if($('#id_Options_2')[0].checked){
+                checked_secondaryimages.push(secondaryImages[2]);
+            }
+            results = window.localStorage.getItem('results');
+            if(!results){
+                let res = {};
+                res['gameid'] = gameid;
+                let round = window.localStorage.getItem('round');
+                res['round'+round] = {};
+                res['round'+round]['primaryImage'] = primaryImage;
+                res['round'+round]['secondaryImages'] = secondaryImages;
+                res['player1'] = $('.cls_player1')[0].innerText;
+                res['player2'] = $('.cls_player2')[0].innerText;
+            }
+
+            data = window.localStorage.getItem(gameid);
+            if(data){
+                var json_data = JSON.stringify(data);
+                var meta1 = JSON.parse(window.localStorage.getItem("meta"));
+            }
+            else{
+             window.localStorage.setItem(gameid, $('.cls_gameid')[0].innerText)
+            }
+        }
+    });
+</script>
 
 </html>
