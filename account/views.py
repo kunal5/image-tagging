@@ -10,7 +10,6 @@ class SignUpView(FormView):
     """Sign Up View"""
     form_class = SignUpForm
     template_name = 'signup.html'
-    # success_url = '/home'
 
     def form_valid(self, form):
         username = form.cleaned_data['username']
@@ -36,7 +35,7 @@ class SignUpView(FormView):
         user = Participants(username=username, gender=gender, contact_number=contact_number)
         user.set_password(password)
         user.save()
-        return HttpResponseRedirect('/home/?success=1')
+        return HttpResponseRedirect('/home/login/?success=1')
 
     def form_invalid(self, form):
         return render(self.request, self.template_name, {

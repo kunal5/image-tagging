@@ -1,12 +1,13 @@
 import random
+import json
 import time
+
 from django.shortcuts import render
 from django.db.models import Q
 from django.views.generic import CreateView, FormView
 from django.http import JsonResponse, HttpResponseRedirect
 from account.models import Participants
 from game.models import PrimaryImages, SecondaryImages, Game, SharedPair
-# from game.forms import SecondaryImageForm
 
 # Create your views here.
 
@@ -46,7 +47,7 @@ class GameView(CreateView):
                 if SharedPair.objects.filter(sharedplayer2=request.user, is_pair=True):
                     player2 = SharedPair.objects.filter(sharedplayer2=request.user, is_pair=True)[0].sharedplayer1
                     player1 = request.user
-                    Participants.objects.filter(username=player2.username).update(searching_pair=False)
+                    Participants.objects.filter(username=player1.username).update(searching_pair=False)
                     break
                 # if available_players.count() >= 1:
                 #     # Participants.objects.filter(username=request.user.username).update(searching_pair=False)
@@ -55,7 +56,6 @@ class GameView(CreateView):
                 #     break
                 else:
                     continue
-        print('outside while')
         # if not player2:
         #     player2 = self.generate_random_pair(available_players)
         # Participants.objects.filter(username=request.user.username).update(searching_pair=False)
@@ -73,7 +73,6 @@ class GameView(CreateView):
 
         while player2_already_playing:
             # Generating player 2 random distinct index
-            print("inside while")
             pIndex = self.generate_random_indexes(available_players_count)
             player2_already_playing, player2 = self.check_if_player_playing(pIndex, available_players)
         return player2
@@ -86,14 +85,7 @@ class GameView(CreateView):
         return pIndex
 
     def check_if_player_playing(self, pIndex, available_players):
-        print(pIndex)
-        print(available_players)
-        try:
-            player2 = available_players[pIndex]
-        except IndexError:
-            print("inside index error")
-            time.sleep(1)
-            player2 = available_players[pIndex]
+        player2 = available_players[pIndex]
         player2_already_playing = Game.objects.filter(is_playing=True, player1=player2)
         if not player2_already_playing:
             player2_already_playing = Game.objects.filter(is_playing=True, player2=player2)
@@ -102,7 +94,6 @@ class GameView(CreateView):
 
 class RoundView(FormView):
     template_name = 'game_rounds.html'
-    # form_class = SecondaryImageForm
 
     def get(self, request, *args, **kwargs):
         p1 = request.GET.get('player1')
@@ -112,9 +103,9 @@ class RoundView(FormView):
         game = self.get_game(player1, player2)
         sharedpair = self.get_sharedpair(player1, player2)
         primary_indexes, secondary_indexes = self.que_and_ans_in_shared_pair(sharedpair[0], game)
+        # print(primary_indexes)
+        # print(secondary_indexes)
 
-        print(primary_indexes)
-        print(secondary_indexes)
         return render(request, self.template_name, {
             'primary_indexes': primary_indexes,
             'secondary_indexes': secondary_indexes,
@@ -132,27 +123,34 @@ class RoundView(FormView):
         user = Participants.objects.get(username=user)
         gameid = request.POST.get('gameid', None)
         game = Game.objects.get(pk=gameid)
-        if not game.is_playing:
-            game.is_playing = True
+        sharedpair = SharedPair.objects.filter(Q(sharedplayer1=user) | Q(sharedplayer2=user),
+                                               game=game, is_pair=True).prefetch_related(
+            'sharedplayer1', 'sharedplayer2', 'game')[0]
+        if sharedpair.sharedplayer1 == user:
+            sharedpair.sharedplayer1_que_and_ans = answers
+        elif sharedpair.sharedplayer2 == user:
+            sharedpair.sharedplayer2_que_and_ans = answers
+        sharedpair.save()
+        if game.is_playing:
+            game.is_playing = False
             game.save()
-            while True:
-                if SharedPair.objects.get(Q(sharedplayer1=user) | Q(sharedplayer2=user), game=game, is_pair=False):
-                    break
-        else:
 
-        partner = None
-        import ipdb; ipdb.set_trace()
-        if game.player1 == user:
-            partner = game.player2
+            while True:
+                if SharedPair.objects.filter(Q(sharedplayer1=user) | Q(sharedplayer2=user), game=game, is_pair=False):
+                    break
+            score = Game.objects.get(pk=gameid).score
+
+
         else:
-            partner = game.player1
-        # gameid = request.POST.get('gameid')
-        # game = Game.objects.get(pk=gameid)
-        # score = request.POST.get('score', 0)
-        # game.score = score
-        # game.is_playing = False
-        # game.save()
-        # return render(request, self.template_name, {})
+            score = self.getFinalScore(sharedpair, user, game)
+            # Storing the score in database
+            game.score = score
+            game.is_playing = False
+            game.save()
+            sharedpair.is_pair = False
+            sharedpair.save()
+            # print("Inside if %s", sharedpair.__dict__)
+        return JsonResponse({'score': score}, safe=False)
 
     def setFivePrimaryIndexes(self):
         indexes = []
@@ -161,7 +159,6 @@ class RoundView(FormView):
                 random_number = str(random.randint(0, 14))
                 if random_number not in indexes:
                     indexes.append(random_number)
-                # pIndex = random.randint(0, 14)
             except ValueError:
                 pass
         return indexes
@@ -172,10 +169,9 @@ class RoundView(FormView):
             indexes = []
             while len(indexes) < 3:
                 try:
-                    random_number = str(random.randint(0, 2))
+                    random_number = str(random.randint(0, 29))
                     if random_number not in indexes:
                         indexes.append(random_number)
-                    # pIndex = random.randint(0, 14)
                 except ValueError:
                     pass
             secondary_indexes.append(','.join(indexes))
@@ -217,3 +213,57 @@ class RoundView(FormView):
             sharedpair = SharedPair.objects.filter(sharedplayer1=player2, sharedplayer2=player1,
                                                    is_pair=True)
         return sharedpair
+
+    def getFinalScore(self, sharedpair, user, game):
+        while True:
+            print('inside')
+            answer1 = sharedpair.sharedplayer1_que_and_ans
+            answer2 = sharedpair.sharedplayer2_que_and_ans
+            if answer1 and answer2:
+                break
+            else:
+                sharedpair = SharedPair.objects.filter(
+                    Q(sharedplayer1=user) | Q(sharedplayer2=user), game=game, is_pair=True)[0]
+        loggedinuseranswer = None
+        nonloggedinuseranswer = None
+        partner = None
+        final_score = 0
+        if user.username in answer1:
+            loggedinuseranswer = answer1
+            nonloggedinuseranswer = answer2
+            if user.username != sharedpair.game.player1.username:
+                partner = sharedpair.game.player1
+            else:
+                partner = sharedpair.game.player2
+        else:
+            loggedinuseranswer = answer2
+            nonloggedinuseranswer = answer1
+            if user.username != sharedpair.game.player1.username:
+                partner = sharedpair.game.player1
+            else:
+                partner = sharedpair.game.player2
+            # partner = sharedpair.game.player1
+
+        loggedinuseranswer = json.loads(loggedinuseranswer)
+        nonloggedinuseranswer = json.loads(nonloggedinuseranswer)
+        # print(sharedpair.game_id, user.username)
+        # print('---------------------------------------------------')
+        # print(nonloggedinuseranswer)
+
+        # Calculate scores for rounds 1 to 5
+        if loggedinuseranswer[str(sharedpair.game_id)][user.username]['round1']['secondaryCheckedImages'] == \
+                nonloggedinuseranswer[str(sharedpair.game_id)][partner.username]['round1']['secondaryCheckedImages']:
+            final_score += 1
+        if loggedinuseranswer[str(sharedpair.game_id)][user.username]['round2']['secondaryCheckedImages'] == \
+                nonloggedinuseranswer[str(sharedpair.game_id)][partner.username]['round2']['secondaryCheckedImages']:
+            final_score += 1
+        if loggedinuseranswer[str(sharedpair.game_id)][user.username]['round3']['secondaryCheckedImages'] == \
+                nonloggedinuseranswer[str(sharedpair.game_id)][partner.username]['round3']['secondaryCheckedImages']:
+            final_score += 1
+        if loggedinuseranswer[str(sharedpair.game_id)][user.username]['round4']['secondaryCheckedImages'] == \
+                nonloggedinuseranswer[str(sharedpair.game_id)][partner.username]['round4']['secondaryCheckedImages']:
+            final_score += 1
+        if loggedinuseranswer[str(sharedpair.game_id)][user.username]['round5']['secondaryCheckedImages'] == \
+                nonloggedinuseranswer[str(sharedpair.game_id)][partner.username]['round5']['secondaryCheckedImages']:
+            final_score += 1
+        return final_score

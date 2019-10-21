@@ -22,14 +22,14 @@
     </nav>
 </head>
 <body style="background-color: seashell">
-    <h4>Choose the most apt answer according to the given primary image.</h4>
+    <h4 id="id_heading">Choose the most apt answer according to the given primary image.</h4>
     <img alt="" src="" style="padding-left: 38%; width: 60%" id="id_primary_image">
 {#    <form method="post">#}
 {#        {% csrf_token %}#}
 {#        {{ form.as_p }}#}
 {#    </form>#}
 
-    <form method="post">
+    <form method="post" id="id_form_options">
         <input type="hidden" name="csrfmiddlewaretoken" value="SMFN4ktDPjx836hJNR2D9qCHSoUzlU6zRyHGb8tFXRUh7VUzyI9818SHXM3QAw7q">
         <p>
             <label>Options:</label>
@@ -58,6 +58,7 @@
         <p></p>
     </form>
 
+    <div id="#id_score" style="display: none"></div>
     <div style="display: none">
         <span class="cls_gameid" style="display: none">{{ gameid }}</span>
         <span class="cls_primary" style="display: none">{{ primary_images }}</span>
@@ -68,11 +69,11 @@
 {#        <span class="cls_player2" style="display: none">{{ player2 }}</span>#}
         <span class="cls_loggedinuser" style="display: none">{{ user }}</span>
     </div>
-    <div id="loading" style="display: none">
+    <div id="loading" style="display: none;margin-left: 40%;margin-top: 20%;">
         <p>Please wait while we are recording your score &#128512;</p>
     </div>
-    <button class="btn btn-primary cls_newgame" style="display: none">Start a New Game</button>
-    <button class="btn-danger btn btn-primary cls_exit" style="display: none">Exit</button>
+    <button class="btn btn-primary cls_newgame" style="display: none; margin-left: 39%; margin-top: 3%;">Start a New Game</button>
+    <button class="btn-danger btn btn-primary cls_exit" style="display: none;margin-top: 3%;margin-left: 3%;">Exit</button>
     <button class="btn btn-primary cls_save_game" type="submit" style="margin-left: 50%; margin-top: -8%">Next</button>
 </body>
 <script>
@@ -133,7 +134,6 @@
                 roundno += 1;
                 window.localStorage.setItem('Round'+gameid, String(roundno));
                 if(roundno === 6){
-                    debugger;
                     makeAjaxRequest(gameid, user);
                 }
             }
@@ -154,6 +154,9 @@
         let primaryImage = $('#id_primary_image')[0].src;
         let secondaryCheckedImages = [];
         let secondaryImages = [];
+        secondaryImages.push($('.cls_secondaryimage_1')[0].src);
+        secondaryImages.push($('.cls_secondaryimage_2')[0].src);
+        secondaryImages.push($('.cls_secondaryimage_3')[0].src);
         if($('#id_Options_1')[0].checked){
             secondaryCheckedImages.push($('.cls_secondaryimage_1')[0].src);
         }
@@ -168,6 +171,7 @@
         let dummy2 = {};
         let res = {};
         dummy['primaryImages'] = primaryImage;
+        dummy['secondaryImages'] = secondaryImages;
         dummy['secondaryCheckedImages'] = secondaryCheckedImages;
         player['round'+round] = dummy;
         dummy2[user] = player;
@@ -189,6 +193,7 @@
     }
 
     function makeAjaxRequest(gameid, user) {
+        let cleartimeout = null;
         $.ajax({
             url: '/game/round/',
             data: {
@@ -199,12 +204,18 @@
             },
             method: 'post',
             beforeSend: function () {
+                $('#id_primary_image').hide();
+                $('#id_form_options').hide();
+                $('#id_heading').hide();
+                $('.cls_save_game').hide();
                 $("#loading").show();
-                setTimeout(function(){
+                cleartimeout = setTimeout(function abc(){
                     $('#loading').html("<p>Please wait for your partner to finish the game....</p>");
                     }, 5000);
             },
             success: function (data) {
+                debugger;
+                clearTimeout(cleartimeout);
                 console.log(data);
                 let msg = '';
                 if(!data.score){
@@ -212,30 +223,41 @@
 
                 }
                 if(data.score === 0){
-                    msg = "<p> Your score is 0 &#128557;</p>"
+                    msg = "<h2> Your score is 0 &#128557;</h2>"
                 }
                 else if(data.score === 1){
-                    msg = "<p> Your score is 1 &#128546;</p>"
+                    msg = "<h2> Your score is 1 &#128546;</h2>"
                 }
                 else if(data.score === 2){
-                    msg = "<p> Your score is 2 &#128533;</p>"
+                    msg = "<h2> Your score is 2 &#128533;</h2>"
                 }
                 else if(data.score === 3){
-                    msg = "<p> Your score is 3 &#128578;</p>"
+                    msg = "<h2> Your score is 3 &#128578;</h2>"
                 }
                 else if(data.score === 4){
-                    msg = "<p> Your score is 4 &#129312;</p>"
+                    msg = "<h2> Your score is 4 &#129312;</h2>"
                 }
                 else if(data.score === 5){
-                    msg = "<p> Your score is 5 &#127881;</p>"
+                    msg = "<h2> Your score is 5 &#127881;</h2>"
                 }
                 $('#loading').html(msg);
                 $('.cls_save_game').hide();
                 $('.cls_newgame').show();
                 $('.cls_exit').show();
+                $('#id_primary_image').hide();
+                $('#id_form_options').hide();
+                $('#id_heading').hide();
             }
         });
     }
+    $('.cls_newgame').on("click", () => {
+        window.location = '/'
+    });
+
+    $('.cls_exit').on("click", () => {
+        window.location = '/home/logout/'
+    });
+
 </script>
 
 </html>
