@@ -24,116 +24,218 @@
 <body style="background-color: seashell">
     <h4>Choose the most apt answer according to the given primary image.</h4>
     <img alt="" src="" style="padding-left: 38%; width: 60%" id="id_primary_image">
+{#    <form method="post">#}
+{#        {% csrf_token %}#}
+{#        {{ form.as_p }}#}
+{#    </form>#}
+
     <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
+        <input type="hidden" name="csrfmiddlewaretoken" value="SMFN4ktDPjx836hJNR2D9qCHSoUzlU6zRyHGb8tFXRUh7VUzyI9818SHXM3QAw7q">
+        <p>
+            <label>Options:</label>
+        </p>
+        <ul id="id_Options">
+            <li>
+                <label for="id_Options_0">
+                    <input type="checkbox" name="Options" value="4" id="id_Options_1">
+                    <img src="" style="width:260px; height:160px" class="cls_secondaryimage_1">
+                </label>
+
+            </li>
+            <li>
+                <label for="id_Options_1">
+                    <input type="checkbox" name="Options" value="" id="id_Options_2">
+                    <img src="" style="width:260px; height:160px" class="cls_secondaryimage_2">
+                </label>
+            </li>
+            <li>
+                <label for="id_Options_2">
+                    <input type="checkbox" name="Options" value="" id="id_Options_3">
+                    <img src="" style="width:260px; height:160px" class="cls_secondaryimage_3">
+                </label>
+            </li>
+        </ul>
+        <p></p>
     </form>
+
     <div style="display: none">
         <span class="cls_gameid" style="display: none">{{ gameid }}</span>
         <span class="cls_primary" style="display: none">{{ primary_images }}</span>
         <span class="cls_secondary" style="display: none">{{ secondary_images }}</span>
-        <span class="cls_player1" style="display: none">{{ player1 }}</span>
-        <span class="cls_player2" style="display: none">{{ player2 }}</span>
+        <span class="cls_primary_indexes" style="display: none">{{ primary_indexes }}</span>
+        <span class="cls_secondary_indexes" style="display: none">{{ secondary_indexes }}</span>
+{#        <span class="cls_player1" style="display: none">{{ player1 }}</span>#}
+{#        <span class="cls_player2" style="display: none">{{ player2 }}</span>#}
         <span class="cls_loggedinuser" style="display: none">{{ user }}</span>
     </div>
-    <button class="btn btn-primary cls_save_game" type="submit" style="margin-left: 50%; margin-top: -8%">Submit</button>
+    <div id="loading" style="display: none">
+        <p>Please wait while we are recording your score &#128512;</p>
+    </div>
+    <button class="btn btn-primary cls_newgame" style="display: none">Start a New Game</button>
+    <button class="btn-danger btn btn-primary cls_exit" style="display: none">Exit</button>
+    <button class="btn btn-primary cls_save_game" type="submit" style="margin-left: 50%; margin-top: -8%">Next</button>
 </body>
 <script>
     $(document).ready(function(){
-    // your code
-        let primaryImages = $('.cls_primary')[0].innerText.split(',');
-        let secondaryImages = $('.cls_secondary')[0].innerText.split(',');
+        // your code
         let gameid = $('.cls_gameid')[0].innerText;
-        let user = $('.cls_loggedinuser')[0].innerText;
-        let res = {};
-        let data = JSON.parse(window.localStorage.getItem("Game"));
-        if(!data){
-            // Setting Primary Image
-            let pIndex = Math.floor(Math.random() * 15);
-            $('#id_primary_image')[0].src = primaryImages[pIndex];
-
-            // Setting Secondary Images
-            let indexes = () =>{
-                let index1 = null;
-                let index2 = null;
-                let index3 = null;
-                let indexes = [];
-                while(index1===index2||index1===index3||index2===index3){
-                    index1 =  Math.floor(Math.random() * 3);
-                    index2 =  Math.floor(Math.random() * 3);
-                    index3 =  Math.floor(Math.random() * 3);
-                }
-                indexes.push(index1);
-                indexes.push(index2);
-                indexes.push(index3);
-                return indexes;
-            };
-            let sIndexes = indexes();
-            $('.cls_secondaryimage_4')[0].src = $('.cls_secondary')[0].innerText.split(',')[sIndexes[0]];
-            $('.cls_secondaryimage_5')[0].src = $('.cls_secondary')[0].innerText.split(',')[sIndexes[1]];
-            $('.cls_secondaryimage_6')[0].src = $('.cls_secondary')[0].innerText.split(',')[sIndexes[2]];
-            let secondaryImages = [];
-            secondaryImages.push(sIndexes[0]);
-            secondaryImages.push(sIndexes[1]);
-            secondaryImages.push(sIndexes[2]);
-            let player = {};
-            let dummy = {};
-            let dummy2 = {};
-            dummy['primaryImages'] = primaryImages[pIndex];
-            dummy['secondaryImages'] = secondaryImages;
-            player['round1'] = dummy;
-            dummy2[user] = player;
-            res[gameid] = dummy2;
-            console.log(res);
-            window.localStorage.setItem('Game', JSON.stringify(res));
-        }
-        else{
-            debugger;
-        }
+        window.localStorage.setItem('Round'+gameid, '1');
+        setPrimaryAndSecondaryImages(gameid);
     });
 
     $('.cls_save_game').on("click", ()=>{
-        if(!$('#id_Options_0')[0].checked && !$('#id_Options_1')[0].checked && !$('#id_Options_2')[0].checked){
+
+        // If none of the checkbox is selected
+
+        if(!$('#id_Options_1')[0].checked && !$('#id_Options_2')[0].checked && !$('#id_Options_3')[0].checked){
             alert('Please select atleast one option');
         }
+
+        // Save data of round n in window local storage and show new
+        // primary image and new secondary images for round n+1
+
         else{
+            let user = $('.cls_loggedinuser')[0].innerText;
             let gameid = $('.cls_gameid')[0].innerText;
-            let primaryImage = $('#id_primary_image').src;
-            let secondaryImages = window.localStorage('secondaryImages').split(',');
-            let checked_secondaryimages = [];
-            if($('#id_Options_0')[0].checked){
-                checked_secondaryimages.push(secondaryImages[0]);
+            let round = window.localStorage.getItem('Round'+gameid);
+            if(round === '4'){
+                $('.cls_save_game')[0].innerText = "End Game"
+            }
+            // data stores my answers of every round
+            let data = null;
+            if(JSON.parse(window.localStorage.getItem("Answer"+gameid))){
+                data = JSON.parse(window.localStorage.getItem("Answer"+gameid))[gameid][user];
+            }
+            // Answers for round 1 are submitted
+
+            if(!data){
+                let res = getAnswerData(user, gameid, round);
+                console.log(res);
+                window.localStorage.setItem('Answer'+gameid, JSON.stringify(res));
+                round = parseInt(round);
+                round += 1;
+                window.localStorage.setItem('Round'+gameid, String(round));
             }
 
-            if($('#id_Options_1')[0].checked){
-                checked_secondaryimages.push(secondaryImages[1]);
-            }
+            // Append answers of rounds 2,3,4,5 in the same Answer key of window local storage
 
-            if($('#id_Options_2')[0].checked){
-                checked_secondaryimages.push(secondaryImages[2]);
-            }
-            results = window.localStorage.getItem('results');
-            if(!results){
-                let res = {};
-                res['gameid'] = gameid;
-                let round = window.localStorage.getItem('round');
-                res['round'+round] = {};
-                res['round'+round]['primaryImage'] = primaryImage;
-                res['round'+round]['secondaryImages'] = secondaryImages;
-                res['player1'] = $('.cls_player1')[0].innerText;
-                res['player2'] = $('.cls_player2')[0].innerText;
-            }
-
-            data = window.localStorage.getItem(gameid);
-            if(data){
-                var json_data = JSON.stringify(data);
-                var meta1 = JSON.parse(window.localStorage.getItem("meta"));
-            }
             else{
-             window.localStorage.setItem(gameid, $('.cls_gameid')[0].innerText)
+                let answer = JSON.parse(window.localStorage.getItem('Answer'+gameid))[gameid][user];
+                let roundno = parseInt(window.localStorage.getItem('Round'+gameid));
+                let roundnostr = 'round'+roundno;
+                let res = getAnswerData(user, gameid, roundno);
+                let totalrounds = {};
+                let finalanswer = {};
+                answer[roundnostr] = res[gameid][user][roundnostr];
+                totalrounds[user] = answer;
+                finalanswer[gameid] = totalrounds;
+                window.localStorage.setItem('Answer'+gameid, JSON.stringify(finalanswer));
+                roundno += 1;
+                window.localStorage.setItem('Round'+gameid, String(roundno));
+                if(roundno === 6){
+                    debugger;
+                    makeAjaxRequest(gameid, user);
+                }
+            }
+
+            //Unchecking checkbox of previous round
+            $('#id_Options_1')[0].checked = false;
+            $('#id_Options_2')[0].checked = false;
+            $('#id_Options_3')[0].checked = false;
+
+            // Now show new primary image and new secondary images for next round(max 5)
+            if(parseInt(window.localStorage.getItem('Round'+gameid)) < 6){
+                setPrimaryAndSecondaryImages(gameid);
             }
         }
     });
+
+    function getAnswerData(user, gameid, round) {
+        let primaryImage = $('#id_primary_image')[0].src;
+        let secondaryCheckedImages = [];
+        let secondaryImages = [];
+        if($('#id_Options_1')[0].checked){
+            secondaryCheckedImages.push($('.cls_secondaryimage_1')[0].src);
+        }
+        if($('#id_Options_2')[0].checked){
+            secondaryCheckedImages.push($('.cls_secondaryimage_2')[0].src);
+        }
+        if($('#id_Options_3')[0].checked){
+            secondaryCheckedImages.push($('.cls_secondaryimage_3')[0].src);
+        }
+        let player = {};
+        let dummy = {};
+        let dummy2 = {};
+        let res = {};
+        dummy['primaryImages'] = primaryImage;
+        dummy['secondaryCheckedImages'] = secondaryCheckedImages;
+        player['round'+round] = dummy;
+        dummy2[user] = player;
+        res[gameid] = dummy2;
+        return res;
+    }
+
+    function setPrimaryAndSecondaryImages(gameid) {
+        let round = window.localStorage.getItem('Round'+gameid);
+        round = parseInt(round);
+        let primaryImages = $('.cls_primary')[0].innerText.split(',');
+        let secondaryImages = $('.cls_secondary')[0].innerText.split(',');
+        let primaryIndexes = $('.cls_primary_indexes')[0].innerText.split(',');
+        let secondaryIndexes = $('.cls_secondary_indexes')[0].innerText.split('|');
+        $('#id_primary_image')[0].src = primaryImages[parseInt(primaryIndexes[round-1])];
+        $('.cls_secondaryimage_1')[0].src = secondaryImages[parseInt(secondaryIndexes[round-1].split(',')[0])];
+        $('.cls_secondaryimage_2')[0].src = secondaryImages[parseInt(secondaryIndexes[round-1].split(',')[1])];
+        $('.cls_secondaryimage_3')[0].src = secondaryImages[parseInt(secondaryIndexes[round-1].split(',')[2])];
+    }
+
+    function makeAjaxRequest(gameid, user) {
+        $.ajax({
+            url: '/game/round/',
+            data: {
+                'answers': window.localStorage.getItem("Answer"+gameid),
+                'user': user,
+                'gameid': gameid,
+                'csrfmiddlewaretoken': document.cookie.split('csrftoken=')[1]
+            },
+            method: 'post',
+            beforeSend: function () {
+                $("#loading").show();
+                setTimeout(function(){
+                    $('#loading').html("<p>Please wait for your partner to finish the game....</p>");
+                    }, 5000);
+            },
+            success: function (data) {
+                console.log(data);
+                let msg = '';
+                if(!data.score){
+                    $('#loading').html("<p>Please wait for your partner to finish the game....</p>");
+
+                }
+                if(data.score === 0){
+                    msg = "<p> Your score is 0 &#128557;</p>"
+                }
+                else if(data.score === 1){
+                    msg = "<p> Your score is 1 &#128546;</p>"
+                }
+                else if(data.score === 2){
+                    msg = "<p> Your score is 2 &#128533;</p>"
+                }
+                else if(data.score === 3){
+                    msg = "<p> Your score is 3 &#128578;</p>"
+                }
+                else if(data.score === 4){
+                    msg = "<p> Your score is 4 &#129312;</p>"
+                }
+                else if(data.score === 5){
+                    msg = "<p> Your score is 5 &#127881;</p>"
+                }
+                $('#loading').html(msg);
+                $('.cls_save_game').hide();
+                $('.cls_newgame').show();
+                $('.cls_exit').show();
+            }
+        });
+    }
 </script>
 
 </html>

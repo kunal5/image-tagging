@@ -22,3 +22,7 @@ class SharedPair(models.Model):
     sharedplayer1 = models.ForeignKey(Participants, related_name='sharedplayer1')
     sharedplayer2 = models.ForeignKey(Participants, related_name='sharedplayer2')
     is_pair = models.BooleanField(default=False)
+    question = models.CharField(blank=True, max_length=50)
+    options = models.CharField(blank=True, max_length=50)
+    selected_answers = models.CharField(blank=True, max_length=50)
+    game = models.ForeignKey(Game, null=True)
