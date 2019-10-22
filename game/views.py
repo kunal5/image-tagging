@@ -55,6 +55,7 @@ class GameView(CreateView):
                 # elif Participants.objects.filter(username=request.user.username, searching_pair=False):
                 #     break
                 else:
+                    time.sleep(2)
                     continue
         # if not player2:
         #     player2 = self.generate_random_pair(available_players)
