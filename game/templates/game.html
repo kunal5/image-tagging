@@ -31,6 +31,10 @@
             <div id="loading" style="display: none">
                 <p>Please wait ...</p>
             </div>
+            <div id="id_secondplayer_response" style="display: none">
+                <p>Please wait for your partner to start the game</p>
+            </div>
+            <span class="cls_user" style="display: none">{{ user.username }}</span>
             <div class="cls_game" style="display: none">
                 <span class="cls_player1"></span> and
                 <span class="cls_player2"></span>
@@ -68,7 +72,23 @@
 
     $('.cls_game').on("click", startGame);
     function startGame() {
-        window.location = '/game/round/?player1='+$('.cls_player1')[0].innerText+'&player2='+$('.cls_player2')[0].innerText;
+        $.ajax({
+            url: '/game/',
+            data: {
+                'started_playing': $('.cls_user')[0].innerText
+            },
+            method: 'get',
+            beforeSend: function () {
+                $('.cls_pair').hide();
+                $('.cls_game').hide();
+                $('#loading').hide();
+                $("#id_secondplayer_response").show();
+            },
+            success: function (data) {
+                if(data.valid)
+                window.location = '/game/round/?player1='+$('.cls_player1')[0].innerText+'&player2='+$('.cls_player2')[0].innerText+'';
+            }
+        });
     }
 </script>
 </html>

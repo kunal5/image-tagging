@@ -76,7 +76,8 @@ class HomeLogOutView(TemplateView):
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated():
             Participants.objects.filter(username=request.user.username).update(is_loggedin=False,
-                                                                               searching_pair=False)
+                                                                               searching_pair=False,
+                                                                               started_playing=False)
             Game.objects.filter(Q(player1=request.user) | Q(player2=request.user)).update(is_playing=False)
             SharedPair.objects.filter(Q(sharedplayer1=request.user) | Q(sharedplayer2=request.user)).update(
                 is_pair=False)

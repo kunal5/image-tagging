@@ -21,13 +21,42 @@ class GameView(CreateView):
         return super(GameView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        Participants.objects.filter(username=request.user.username).update(searching_pair=False)
-        Game.objects.filter(Q(player1=request.user) | Q(player2=request.user)).update(is_playing=False)
-        SharedPair.objects.filter(Q(sharedplayer1=request.user) | Q(sharedplayer2=request.user)).update(is_pair=False)
-        return render(request, self.template_name, {
-            'show_game_button': True,
-            'user': request.user
-        })
+        current_player = request.GET.get('started_playing', None)
+        if current_player:
+            sharedpair = SharedPair.objects.filter(Q(sharedplayer1=request.user) | Q(sharedplayer2=request.user),
+                                                   is_pair=True)
+
+            loggedin_player = Participants.objects.get(username=current_player)
+
+            if current_player != sharedpair[0].sharedplayer1.username:
+                partner = sharedpair[0].sharedplayer1
+            else:
+                partner = sharedpair[0].sharedplayer2
+
+            if not loggedin_player.started_playing:
+                partner.started_playing = True
+                partner.save()
+            # Participants.objects.filter(username=current_player).update(started_playing=True)
+            if not loggedin_player.started_playing:
+                while True:
+                    if not sharedpair[0].question and not sharedpair[0].options and not sharedpair[0].game:
+                        sharedpair = SharedPair.objects.filter(
+                            Q(sharedplayer1=request.user) | Q(sharedplayer2=request.user),
+                            is_pair=True)
+                        continue
+                    else:
+                        break
+            return JsonResponse({'valid': True}, safe=False)
+        else:
+            Participants.objects.filter(username=request.user.username).update(searching_pair=False,
+                                                                               started_playing=False)
+            Game.objects.filter(Q(player1=request.user) | Q(player2=request.user)).update(is_playing=False)
+            SharedPair.objects.filter(Q(sharedplayer1=request.user) | Q(sharedplayer2=request.user)).update(
+                is_pair=False)
+            return render(request, self.template_name, {
+                'show_game_button': True,
+                'user': request.user
+            })
 
     def post(self, request, *args, **kwargs):
         player1 = None
@@ -104,6 +133,7 @@ class RoundView(FormView):
         game = self.get_game(player1, player2)
         sharedpair = self.get_sharedpair(player1, player2)
         primary_indexes, secondary_indexes = self.que_and_ans_in_shared_pair(sharedpair[0], game)
+
         # print(primary_indexes)
         # print(secondary_indexes)
 
